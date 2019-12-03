@@ -1,0 +1,20 @@
+.logo{
+    width: 75px;
+    max-width: 100px;
+    margin-right: 50px;
+    margin-left: 20px;
+}
+
+.bg-ice-white {
+    justify-content: end;
+    width: 100%;
+    background-color: #dfdfdf;
+}
+
+.nav-link-uber{
+    font-family: 'Karla', sans-serif;
+    font-size: 24px;
+    margin-top: 10px;
+    margin-left: 30px;
+    padding: 10px;
+}
