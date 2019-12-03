@@ -90,7 +90,6 @@ export default class Market extends Component {
 
   async getVehiclesNamesFromApi() {
     const response = await axios.get(apiUrl + LIST_AVAILABLE_VEHICLES);
-    console.log(response.data);
     let allVehicles = [];
     response.data.map(vehicle => {
       allVehicles.push(vehicle);
@@ -107,23 +106,25 @@ export default class Market extends Component {
   }
 
   async postNewUser() {
-    const response = await axios.post(apiUrl + NEW_CUSTOMER, {
-      headers: { "Content-Type": "application/json" },
-      data: {
-        cpf: "123.456.789-00",
-        name: "José da Silva",
-        phoneNumber: "(083) 99999-8844",
-        address: "Rua Mariquinha, 290",
-        city: "João Pessoa"
-      }
-    });
-
-    console.log(response);
-    console.log(response.data);
+    const response = await axios
+      .post(apiUrl + NEW_CUSTOMER, {
+        cpf: this.state.user.cpf,
+        name: this.state.user.name,
+        phoneNumber: this.state.user.phoneNumber,
+        address: this.state.user.address,
+        city: this.state.user.city
+      })
+      .then(function(response) {
+        console.log(response);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
   }
 
   async postNewRent() {
     console.log(this.state.rent.rentedVehicle);
+    let price;
 
     const response = await axios
       .post(
@@ -146,47 +147,40 @@ export default class Market extends Component {
       )
       .then(response => {
         console.log(response);
+        this.toggleSuccess();
+        price = response.data;
       })
       .catch(error => {
         console.log(error.response);
       });
 
     console.log(response);
-
-    //  this.setState({totalPrice: response.data})
-
-    return response.data;
   }
 
   async postNewVehicle() {
-    var dataCar = {
-      modelName: this.state.offer.modelName,
-      rentValuePerDay: this.state.offer.rentValuePerDay,
-      vehicleColor: this.state.offer.vehicleColor,
-      description: this.state.offer.description,
-      licensePlate: this.state.offer.licensePlate,
-      numberOfSeats: this.state.numberOfSeats
-    };
-
-    var dataMotorcycle = {
-      modelName: this.state.offer.modelName,
-      rentValuePerDay: this.state.offer.rentValuePerDay,
-      vehicleColor: this.state.offer.vehicleColor,
-      description: this.state.offer.description,
-      licensePlate: this.state.offer.licensePlate,
-      hasElectricStart: this.state.hasElectricStart
-    };
-
     var response;
 
     if (this.state.isACar) {
       response = await axios
-        .post(apiUrl + NEW_CAR, {
-          headers: { "Content-Type": "application/json" },
-          data: { dataCar }
-        })
+        .post(
+          apiUrl + NEW_CAR,
+          {
+            modelName: this.state.offer.modelName,
+            rentValuePerDay: this.state.offer.rentValuePerDay,
+            vehicleColor: this.state.offer.vehicleColor,
+            description: this.state.offer.description,
+            licensePlate: this.state.offer.licensePlate,
+            numberOfSeats: this.state.numberOfSeats
+          },
+          {
+            params: {
+              customerCpf: this.state.offer.ownerCpf
+            }
+          }
+        )
         .then(response => {
           console.log(response);
+          this.toggleSuccess();
         })
         .catch(error => {
           console.log(error.response);
@@ -196,20 +190,31 @@ export default class Market extends Component {
         .post(
           apiUrl + NEW_MOTORCYCLE,
           {
-            headers: { "Content-Type": "application/json" },
-            data: { dataMotorcycle }
+            params: {
+              customerCpf: this.state.offer.ownerCpf
+            },
+            modelName: this.state.offer.modelName,
+            rentValuePerDay: this.state.offer.rentValuePerDay,
+            vehicleColor: this.state.offer.vehicleColor,
+            description: this.state.offer.description,
+            licensePlate: this.state.offer.licensePlate,
+            hasElectricStart: this.state.hasElectricStart
           },
-          { params: { customerCpf: this.state.offer.ownerCpf } }
+          {
+            headers: {
+              "Content-type": "application/json"
+            }
+          }
         )
         .then(response => {
           console.log(response);
+          this.toggleSuccess();
+          this.getVehiclesNamesFromApi();
         })
         .catch(error => {
           console.log(error.response);
         });
     }
-
-    console.log(response.data);
   }
 
   toggleHasInsurance() {
@@ -691,7 +696,6 @@ export default class Market extends Component {
                   </Form.Row>
 
                   <Button
-                    type="submit"
                     onClick={this.postNewVehicle.bind(this)}
                     size="lg"
                     variant="outline-dark"
