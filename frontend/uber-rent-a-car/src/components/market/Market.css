@@ -13,7 +13,7 @@
     font-size: 16px;
 }
 
-.toast{
+.toast-success{
     color: rgb(59, 182, 59);
     background-color: rgb(180, 218, 180);
     position: fixed;
@@ -21,9 +21,22 @@
     right: 0;   
 }
 
-.toast-header{
+.toast-header-success{
     color: green;
     background-color: lightgreen;
+}
+
+.toast-failure{
+    color: rgba(255, 255, 255, 0.842);
+    background-color: rgb(233, 79, 79);
+    position: fixed;
+    top: 0; 
+    right: 0;   
+}
+
+.toast-header-failure{
+    color: rgba(255, 255, 255, 0.774);
+    background-color: rgb(248, 80, 80);
 }
 
 .btn-outline-dark {

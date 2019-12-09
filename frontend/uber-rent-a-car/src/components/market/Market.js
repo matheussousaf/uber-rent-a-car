@@ -22,13 +22,15 @@ export default class Market extends Component {
     this.handleInputHasString = this.handleInputHasString.bind(this);
     this.handleLicensePlate = this.handleLicensePlate.bind(this);
     this.getVehiclesNamesFromApi();
+    this.toggleSuccess = this.toggleSuccess.bind(this);
+    this.toggleFailure = this.toggleFailure.bind(this);
   }
 
   state = {
     rent: {
       customerCpf: "",
       rentedVehicle: 1,
-      totalDaysOfRent: "",
+      totalDaysOfRent: 0,
       hasInsurance: false
     },
     offer: {
@@ -56,37 +58,63 @@ export default class Market extends Component {
     isBackspace: false,
     isNotADotNorADash: false,
     show: true,
-    success: false
+    success: false,
+    phrase: "",
+    failure: false
   };
 
   toggleSuccess() {
-    this.setState({ success: !this.state.success });
+    this.setState({ success: true });
   }
 
-  toastSuccess = () => {
+  toastSuccess = text => {
+    text = this.state.phrase;
     return (
       <Toast
         onClose={() => {
-          this.setState({ show: !this.state.show });
+          this.setState({ success: false });
         }}
-        show={this.state.show}
-        delay={1000}
+        show={this.state.success}
+        delay={4000}
         autohide
-        className="toast"
+        className="toast-success"
       >
-        <Toast.Header className="toast-header">
+        <Toast.Header className="toast-header-success">
           <img src="holder.js/20x20?text=%20" className="rounded mr-2" alt="" />
           <strong className="mr-auto">Notification</strong>
         </Toast.Header>
         <Toast.Body>
-          <p>Your vehicle was rented, it'll be on the way of your home soon.</p>
-          <p>
-            Total: <span className="price">U$ {this.state.totalPrice}</span>
-          </p>
+          <p>{text}</p>
         </Toast.Body>
       </Toast>
     );
   };
+
+  toggleFailure() {
+    this.setState({ failure: !this.state.failure });
+  }
+
+  toastFailure = () => {
+    return (
+      <Toast
+        onClose={() => {
+          this.setState({ failure: false });
+        }}
+        show={this.state.failure}
+        delay={4000}
+        autohide
+        className="toast-failure"
+      >
+        <Toast.Header className="toast-header-failure">
+          <img src="holder.js/20x20?text=%20" className="rounded mr-2" alt="" />
+          <strong className="mr-auto">Warning</strong>
+        </Toast.Header>
+        <Toast.Body>
+          <p>Fill the fields below correctly!</p>
+        </Toast.Body>
+      </Toast>
+    );
+  }
 
   async getVehiclesNamesFromApi() {
     const response = await axios.get(apiUrl + LIST_AVAILABLE_VEHICLES);
@@ -106,7 +134,7 @@ export default class Market extends Component {
   }
 
   async postNewUser() {
-    const response = await axios
+    await axios
       .post(apiUrl + NEW_CUSTOMER, {
         cpf: this.state.user.cpf,
         name: this.state.user.name,
@@ -114,11 +142,14 @@ export default class Market extends Component {
         address: this.state.user.address,
         city: this.state.user.city
       })
-      .then(function(response) {
+      .then(response => {
         console.log(response);
+        this.setState({ phrase: "You successfully registered!" });
+        this.toggleSuccess();
       })
-      .catch(function(error) {
+      .catch(error => {
         console.log(error);
+        this.toggleFailure();
       });
   }
 
@@ -130,13 +161,9 @@ export default class Market extends Component {
       .post(
         apiUrl + NEW_RENT,
         {
-          headers: {
-            "Content-type": "application/json"
-          },
-          data: {
-            totalDaysOfRent: this.state.rent.totalDaysOfRent,
+            totalDaysOfRent: parseInt(this.state.rent.totalDaysOfRent),
             hasInsurance: this.state.rent.hasInsurance
-          }
+
         },
         {
           params: {
@@ -147,21 +174,23 @@ export default class Market extends Component {
       )
       .then(response => {
         console.log(response);
+        console.log(this.state.rent);
+        price = response.data.totalPrice;
+        this.setState({
+          phrase: `You successfully rented a vehicle! Total price: R$ ${price}`
+        });
         this.toggleSuccess();
-        price = response.data;
+        console.log(price);
       })
       .catch(error => {
         console.log(error.response);
+        this.toggleFailure();
       });
-
-    console.log(response);
   }
 
   async postNewVehicle() {
-    var response;
-
     if (this.state.isACar) {
-      response = await axios
+      await axios
         .post(
           apiUrl + NEW_CAR,
           {
@@ -180,13 +209,17 @@ export default class Market extends Component {
         )
         .then(response => {
           console.log(response);
+          this.setState({ phrase: "You successfully offered your car!" });
           this.toggleSuccess();
+          this.getVehiclesNamesFromApi();
+          this.forceUpdate();
         })
         .catch(error => {
           console.log(error.response);
+          this.toggleFailure();
         });
     } else {
-      response = await axios
+      await axios
         .post(
           apiUrl + NEW_MOTORCYCLE,
           {
@@ -208,10 +241,13 @@ export default class Market extends Component {
         )
         .then(response => {
           console.log(response);
+          this.setState({ phrase: "You successfully offered your car!" });
           this.toggleSuccess();
           this.getVehiclesNamesFromApi();
+          this.forceUpdate();
         })
         .catch(error => {
+          this.toggleFailure();
           console.log(error.response);
         });
     }
@@ -386,6 +422,7 @@ export default class Market extends Component {
 
   handleVehicleId(e) {
     let key = e.target.value.split(" -")[0];
+    console.log(key);
     this.setState({
       rent: Object.assign({}, this.state.rent, {
         rentedVehicle: parseInt(key)
@@ -413,6 +450,7 @@ export default class Market extends Component {
         <div className="breaking-content"></div>
         <div className="market-container">
           {this.state.success ? this.toastSuccess() : null}
+          {this.state.failure ? this.toastFailure() : null}
 
           <div className="car-market">
             <Slider className="slide" {...settings}>
@@ -515,6 +553,7 @@ export default class Market extends Component {
                         onChange={this.handleVehicleId.bind(this)}
                         as="select"
                       >
+                        <option>Choose...</option>
                         {this.state.modelNames.length > 0 ? (
                           this.state.modelNames.map((vehicle, i) => {
                             return (
